@@ -11,6 +11,10 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'web-production-5904b.up.railway.app'] + os.environ.get('ALLOWED_HOSTS', '').split(',')
 ALLOWED_HOSTS = [h for h in ALLOWED_HOSTS if h]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-5904b.up.railway.app',
+]
+
 GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/Issilidren/think-tank')
 
 INSTALLED_APPS = [
