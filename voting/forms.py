@@ -14,7 +14,7 @@ class IdeaForm(forms.ModelForm):
         widgets = {
             'text': forms.Textarea(attrs={
                 'rows': 2,
-                'placeholder': 'Share a game idea...',
+                'placeholder': 'Share a project idea...',
                 'maxlength': 300,
             })
         }

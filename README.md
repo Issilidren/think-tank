@@ -1,6 +1,6 @@
 # Think Tank
 
-Collaborative game idea voting platform for Code Platoon — Dakota Cohort.
+Class project think tank — submit project ideas, vote on themes, collaborate across teams.
 
 Teams: **404 Brain not found!** and **Da_Koders**
 
@@ -41,7 +41,7 @@ Open http://127.0.0.1:8000/project/1/
 ## Usage
 
 1. Set your handle and pick your team (404 Brain not found! or Da_Koders)
-2. Submit game ideas in the Recent Ideas feed
+2. Submit project ideas in the Recent Ideas feed
 3. Suggest themes in the Theme Poll and vote on others
 
 ---

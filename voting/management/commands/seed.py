@@ -8,7 +8,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         project, created = Project.objects.get_or_create(
             pk=1,
-            defaults={'title': 'Game Idea Think Tank — Dakota Cohort'}
+            defaults={'title': 'Think Tank — Dakota Cohort'}
         )
         if created:
             self.stdout.write(self.style.SUCCESS(f'Created project: {project.title}'))
