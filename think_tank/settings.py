@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-insecure-key-change-in-production')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] + os.environ.get('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'web-production-5904b.up.railway.app'] + os.environ.get('ALLOWED_HOSTS', '').split(',')
 ALLOWED_HOSTS = [h for h in ALLOWED_HOSTS if h]
 
 GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/Issilidren/think-tank')
