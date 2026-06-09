@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %} — {{ project.title }}{% endblock %}
+{% block title %} — {{ project.title }}{% if project.is_private %} (Private){% endif %}{% endblock %}
 
 {% block content %}
 <div class="layout">
@@ -9,7 +9,15 @@
   <!-- LEFT: Recent Ideas feed -->
   <aside class="ideas-panel">
     <div class="panel-header">
-      <h2>Recent Ideas</h2>
+      <h2>
+        Recent Ideas
+        {% if project.is_private %}
+          <span class="private-badge" title="Private project">&#x1F512; Private</span>
+        {% endif %}
+      </h2>
+      {% if project.is_private and project.owner %}
+        <p class="private-owner-label">Private &mdash; @{{ project.owner.name }}</p>
+      {% endif %}
       <div class="filter-bar">
         <button class="filter-btn active" data-filter="all">All</button>
         <button class="filter-btn" data-filter="404">404 Brain</button>
@@ -32,12 +40,27 @@
     </ul>
 
     {% if current_handle %}
-      <form class="idea-form" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="submit_idea">
-        {{ idea_form.text }}
-        <button type="submit" class="btn btn-primary">Submit Idea</button>
-      </form>
+      {% if project.is_private %}
+        {% if current_handle == project.owner %}
+          <form class="idea-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="submit_idea">
+            {{ idea_form.text }}
+            <button type="submit" class="btn btn-primary">Submit Idea</button>
+          </form>
+        {% else %}
+          <p class="private-notice">
+            &#x1F512; Only @{{ project.owner.name }} can add ideas to this private project.
+          </p>
+        {% endif %}
+      {% else %}
+        <form class="idea-form" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="submit_idea">
+          {{ idea_form.text }}
+          <button type="submit" class="btn btn-primary">Submit Idea</button>
+        </form>
+      {% endif %}
     {% endif %}
   </aside>
 
