@@ -6,6 +6,17 @@ from .forms import HandleForm, IdeaForm, ThemeForm
 logger = logging.getLogger(__name__)
 
 
+def user_profile(request, handle_id):
+    handle = get_object_or_404(Handle, pk=handle_id)
+    ideas = Idea.objects.filter(handle=handle).select_related('project').order_by('-submitted_at')
+    votes = Vote.objects.filter(handle=handle).select_related('theme', 'theme__project').order_by('theme__project__title', 'theme__title')
+    return render(request, 'voting/user_profile.html', {
+        'profile_handle': handle,
+        'ideas': ideas,
+        'votes': votes,
+    })
+
+
 def project_view(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
 
