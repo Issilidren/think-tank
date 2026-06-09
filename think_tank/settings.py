@@ -11,9 +11,18 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'web-production-5904b.up.railway.app'] + os.environ.get('ALLOWED_HOSTS', '').split(',')
 ALLOWED_HOSTS = [h for h in ALLOWED_HOSTS if h]
 
+# Required for HTTPS form posts in production (Django 4+ checks the Origin header)
 CSRF_TRUSTED_ORIGINS = [
     'https://web-production-5904b.up.railway.app',
-]
+] + [o for o in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if o]
+
+# Behind Railway's proxy, this header is how Django knows the request was HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
 
 GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/Issilidren/think-tank')
 
@@ -25,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'voting',
+    'django_vite',
 ]
 
 MIDDLEWARE = [
@@ -70,6 +80,17 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+DJANGO_VITE = {
+    'default': {
+        'dev_mode': DEBUG,
+        'dev_server_protocol': 'http',
+        'dev_server_host': 'localhost',
+        'dev_server_port': 5173,
+        'manifest_path': BASE_DIR / 'static' / 'dist' / '.vite' / 'manifest.json',
+        'static_url_prefix': 'dist',
+    }
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

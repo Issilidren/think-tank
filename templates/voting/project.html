@@ -4,100 +4,85 @@
 {% block title %} — {{ project.title }}{% if project.is_private %} (Private){% endif %}{% endblock %}
 
 {% block content %}
-<div class="layout">
 
-  <!-- LEFT: Recent Ideas feed -->
-  <aside class="ideas-panel">
-    <div class="panel-header">
-      <h2>
-        Recent Ideas
-        {% if project.is_private %}
-          <span class="private-badge" title="Private project">&#x1F512; Private</span>
-        {% endif %}
-      </h2>
-      {% if project.is_private and project.owner %}
-        <p class="private-owner-label">Private &mdash; @{{ project.owner.name }}</p>
+<!-- Zone 2: Handle bar -->
+<div class="handle-bar">
+  <div class="handle-bar-inner">
+    <div class="handle-bar-avatar">&#x1F464;</div>
+    <div class="handle-bar-body">
+      {% if current_handle %}
+        <span class="handle-bar-name">@{{ current_handle.name }}</span>
+        <span class="handle-pill team-{{ current_handle.team }}">{{ current_handle.team_label }}</span>
       {% endif %}
-      <div class="filter-bar">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="404">404 Brain</button>
-        <button class="filter-btn" data-filter="da_koders">Da_Koders</button>
-      </div>
-    </div>
-
-    <ul class="idea-list" id="ideaList">
-      {% for idea in ideas %}
-        <li class="idea-item" data-team="{{ idea.handle.team }}">
-          <span class="team-badge team-{{ idea.handle.team }}">
-            {{ idea.handle.team_label|default:"Unknown" }}
-          </span>
-          <span class="idea-text">{{ idea.text }}</span>
-          <span class="idea-meta">@{{ idea.handle.name }} &middot; {{ idea.submitted_at|date:"M j, g:i a" }}</span>
-        </li>
-      {% empty %}
-        <li class="idea-empty">No ideas yet — be the first!</li>
-      {% endfor %}
-    </ul>
-
-    {% if current_handle %}
-      {% if project.is_private %}
-        {% if current_handle == project.owner %}
-          <form class="idea-form" method="post">
+      {% if not current_handle %}
+        <p class="handle-bar-copy">Set a handle to submit ideas and vote on themes.</p>
+        <div class="card handle-card">
+          <form method="post" class="handle-inline-form">
             {% csrf_token %}
-            <input type="hidden" name="action" value="submit_idea">
-            {{ idea_form.text }}
-            <button type="submit" class="btn btn-primary">Submit Idea</button>
-          </form>
-        {% else %}
-          <p class="private-notice">
-            &#x1F512; Only @{{ project.owner.name }} can add ideas to this private project.
-          </p>
-        {% endif %}
-      {% else %}
-        <form class="idea-form" method="post">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="submit_idea">
-          {{ idea_form.text }}
-          <button type="submit" class="btn btn-primary">Submit Idea</button>
-        </form>
-      {% endif %}
-    {% endif %}
-  </aside>
-
-  <!-- RIGHT: Theme Poll + Handle setup -->
-  <section class="main-panel">
-
-    <!-- Handle setup (shown until handle is set) -->
-    {% if not current_handle %}
-      <div class="card handle-card">
-        <h2>Set Your Handle</h2>
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="set_handle">
-          <div class="field">
-            <label for="id_name">Handle</label>
-            {{ handle_form.name }}
-          </div>
-          <div class="field">
-            <label>Team</label>
-            <div class="radio-group">
-              {% for radio in handle_form.team %}
-                <label class="radio-label">{{ radio.tag }} {{ radio.choice_label }}</label>
-              {% endfor %}
+            <input type="hidden" name="action" value="set_handle">
+            <div class="handle-inline-fields">
+              <div class="field">
+                <label for="id_name">Handle</label>
+                {{ handle_form.name }}
+              </div>
+              <div class="field">
+                <label>Team</label>
+                <div class="radio-group">
+                  {% for radio in handle_form.team %}
+                    <label class="radio-label">{{ radio.tag }} {{ radio.choice_label }}</label>
+                  {% endfor %}
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">Set Handle</button>
             </div>
-          </div>
-          <button type="submit" class="btn btn-primary">Set Handle</button>
-        </form>
-      </div>
-    {% endif %}
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
 
-    <!-- Theme Poll -->
+<!-- Zone 3: Breadcrumb + page title -->
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="/project/1/" class="breadcrumb-link">Projects</a>
+    <span class="breadcrumb-sep">/</span>
+    <span>Think Tank</span>
+    <span class="votes-badge">{{ themes|length }} theme{{ themes|length|pluralize }}</span>
+  </div>
+  <h1 class="page-title">
+    {{ project.title }}
+    {% if project.is_private %}<span class="private-badge" title="Private project">&#x1F512; Private</span>{% endif %}
+  </h1>
+  <p class="page-subtitle">Vote on themes and submit your project ideas below.</p>
+</div>
+
+<!-- Zone 4: Two-column grid -->
+<div class="content-grid">
+
+  <!-- Main (wider): Theme Poll -->
+  <section class="poll-main">
     <div class="card">
-      <h2>Theme Poll</h2>
+      <h2>&#x1F4CA; Theme Poll</h2>
 
       <div class="theme-grid">
         {% for theme in themes %}
-          <div class="theme-card">
+          <div class="theme-card" data-theme-id="{{ theme.pk }}">
+            {% if current_handle and theme.suggested_by_id == current_handle.pk %}
+              <form method="post" class="delete-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_theme">
+                <input type="hidden" name="theme_id" value="{{ theme.pk }}">
+                <button type="submit" class="btn-delete" title="Delete this theme">&#x2715;</button>
+              </form>
+            {% endif %}
+            <div class="poll-tally" title="{{ theme.vote_count }} of {{ total_votes }} vote{{ total_votes|pluralize }}">
+              <div class="poll-tally-track">
+                <div class="poll-tally-fill" style="--pct: {{ theme.vote_pct }}%"></div>
+              </div>
+              <span class="poll-tally-pct">{{ theme.vote_pct }}%</span>
+              {% if theme.pk == leader_id %}<span class="leading-badge">&#x26A1; Majority</span>{% endif %}
+            </div>
             <div class="theme-title">{{ theme.title }}</div>
             <div class="theme-meta">
               suggested by @{{ theme.suggested_by.name }}
@@ -109,20 +94,61 @@
               {{ theme.vote_count }} vote{{ theme.vote_count|pluralize }}
             </div>
             {% if current_handle %}
-              {% if theme.pk in voted_theme_ids %}
-                <span class="voted-label">Voted</span>
-              {% else %}
-                <form method="post" class="vote-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="action" value="vote">
-                  <input type="hidden" name="theme_id" value="{{ theme.pk }}">
+              <form method="post" class="vote-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="vote">
+                <input type="hidden" name="theme_id" value="{{ theme.pk }}">
+                {% if theme.pk in voted_theme_ids %}
+                  <button type="submit" class="btn btn-vote is-voted" title="Click to take your vote back">&#x2714; Voted</button>
+                {% else %}
                   <button type="submit" class="btn btn-vote">Vote</button>
+                {% endif %}
+              </form>
+            {% endif %}
+
+            <div class="comment-thread">
+              {% for comment in theme.comments.all %}
+                <div class="comment{% if comment.pk == theme.top_comment_id %} top-build{% endif %}">
+                  <span class="team-dot team-{{ comment.handle.team }}"></span>
+                  <span class="comment-author">@{{ comment.handle.name }}</span>
+                  <span class="comment-text">{{ comment.text }}</span>
+                  {% if current_handle %}
+                    <form method="post" class="comment-vote-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="vote_comment">
+                      <input type="hidden" name="comment_id" value="{{ comment.pk }}">
+                      <input type="hidden" name="theme_id" value="{{ theme.pk }}">
+                      <button type="submit" class="btn-comment-vote{% if comment.pk in voted_comment_ids %} is-voted{% endif %}"
+                              title="{% if comment.pk in voted_comment_ids %}Take back your vote{% else %}Vote for this build{% endif %}">
+                        &#x26A1;{{ comment.vote_count }}
+                      </button>
+                    </form>
+                  {% else %}
+                    <span class="comment-vote-count">&#x26A1;{{ comment.vote_count }}</span>
+                  {% endif %}
+                  {% if current_handle and comment.handle_id == current_handle.pk %}
+                    <form method="post" class="delete-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete_comment">
+                      <input type="hidden" name="comment_id" value="{{ comment.pk }}">
+                      <button type="submit" class="btn-delete" title="Delete this comment">&#x2715;</button>
+                    </form>
+                  {% endif %}
+                </div>
+              {% endfor %}
+              {% if current_handle %}
+                <form method="post" class="comment-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="comment">
+                  <input type="hidden" name="theme_id" value="{{ theme.pk }}">
+                  <input type="text" name="text" maxlength="300" placeholder="Build on this concept..." required>
+                  <button type="submit" class="btn btn-comment" title="Add to the storm">&#x26A1;</button>
                 </form>
               {% endif %}
-            {% endif %}
+            </div>
           </div>
         {% empty %}
-          <p class="empty-msg">No themes yet. Suggest one below!</p>
+          <p class="empty-msg">No themes yet — suggest one below!</p>
         {% endfor %}
       </div>
 
@@ -135,21 +161,76 @@
         </form>
       {% endif %}
     </div>
-
   </section>
+
+  <!-- Side (narrower): Submit idea + Recent ideas -->
+  <aside class="ideas-side">
+
+    <!-- Submit an idea card -->
+    <div class="card">
+      <h2>&#x2795; Submit an idea</h2>
+      {% if not current_handle %}
+        <p class="locked-note">&#x1F512; Set a handle above to submit ideas.</p>
+      {% elif project.is_private and current_handle != project.owner %}
+        <p class="locked-note">&#x1F512; Only @{{ project.owner.name }} can add ideas to this private project.</p>
+      {% else %}
+        <form class="idea-form" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="submit_idea">
+          {{ idea_form.text }}
+          <button type="submit" class="btn btn-primary">Submit Idea</button>
+        </form>
+      {% endif %}
+    </div>
+
+    <!-- Recent ideas card -->
+    <div class="card ideas-panel">
+      <div class="panel-header">
+        <h2>&#x1F550; Recent Ideas</h2>
+        <div class="filter-bar">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="404">404 Brain</button>
+          <button class="filter-btn" data-filter="da_koders">Da_Koders</button>
+        </div>
+      </div>
+
+      <ul class="idea-list" id="ideaList">
+        {% for idea in ideas %}
+          <li class="idea-item" data-team="{{ idea.handle.team }}">
+            <span class="team-badge team-{{ idea.handle.team }}">
+              {{ idea.handle.team_label|default:"Unknown" }}
+            </span>
+            <span class="idea-text">{{ idea.text }}</span>
+            <span class="idea-meta">@{{ idea.handle.name }} &middot; {{ idea.submitted_at|date:"M j, g:i a" }}</span>
+            {% if current_handle and idea.handle_id == current_handle.pk %}
+              <form method="post" class="delete-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_idea">
+                <input type="hidden" name="idea_id" value="{{ idea.pk }}">
+                <button type="submit" class="btn-delete" title="Delete this idea">&#x2715;</button>
+              </form>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li class="idea-empty">No ideas yet — be the first!</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+  </aside>
 </div>
 
 <script>
   (function () {
     var btns = document.querySelectorAll('.filter-btn');
-    var items = document.querySelectorAll('#ideaList .idea-item');
 
     btns.forEach(function (btn) {
       btn.addEventListener('click', function () {
         var filter = btn.dataset.filter;
         btns.forEach(function (b) { b.classList.remove('active'); });
         btn.classList.add('active');
-        items.forEach(function (item) {
+        // Query at click time — the list gets swapped out after AJAX submits
+        document.querySelectorAll('#ideaList .idea-item').forEach(function (item) {
           item.style.display = (filter === 'all' || item.dataset.team === filter) ? '' : 'none';
         });
       });

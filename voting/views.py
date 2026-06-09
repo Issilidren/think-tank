@@ -1,7 +1,7 @@
 import logging
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Project, Handle, Idea, Theme, Vote
-from .forms import HandleForm, IdeaForm, ThemeForm
+from .models import Project, Handle, Idea, Theme, Vote, Comment, CommentVote
+from .forms import HandleForm, IdeaForm, ThemeForm, CommentForm
 
 logger = logging.getLogger(__name__)
 
@@ -63,19 +63,85 @@ def project_view(request, project_id):
             theme_id = request.POST.get('theme_id')
             if theme_id:
                 theme = get_object_or_404(Theme, pk=theme_id, project=project)
-                Vote.objects.get_or_create(theme=theme, handle=current_handle)
+                vote, created = Vote.objects.get_or_create(theme=theme, handle=current_handle)
+                if not created:
+                    vote.delete()  # toggle: voting again takes the vote back
+            return redirect('voting:project', project_id=project_id)
+
+        if action == 'vote_comment' and current_handle:
+            comment_id = request.POST.get('comment_id')
+            if comment_id:
+                comment = get_object_or_404(Comment, pk=comment_id, theme__project=project)
+                cvote, created = CommentVote.objects.get_or_create(comment=comment, handle=current_handle)
+                if not created:
+                    cvote.delete()
+            return redirect('voting:project', project_id=project_id)
+
+        if action == 'comment' and current_handle:
+            theme_id = request.POST.get('theme_id')
+            form = CommentForm(request.POST)
+            if theme_id and form.is_valid():
+                theme = get_object_or_404(Theme, pk=theme_id, project=project)
+                comment = form.save(commit=False)
+                comment.theme = theme
+                comment.handle = current_handle
+                comment.save()
+            return redirect('voting:project', project_id=project_id)
+
+        # Deletes are owner-only: the filter on handle/suggested_by means you
+        # can only ever remove your own posts, never a teammate's.
+        if action == 'delete_idea' and current_handle:
+            Idea.objects.filter(
+                pk=request.POST.get('idea_id'), project=project, handle=current_handle,
+            ).delete()
+            return redirect('voting:project', project_id=project_id)
+
+        if action == 'delete_theme' and current_handle:
+            Theme.objects.filter(
+                pk=request.POST.get('theme_id'), project=project, suggested_by=current_handle,
+            ).delete()
+            return redirect('voting:project', project_id=project_id)
+
+        if action == 'delete_comment' and current_handle:
+            Comment.objects.filter(
+                pk=request.POST.get('comment_id'), theme__project=project, handle=current_handle,
+            ).delete()
             return redirect('voting:project', project_id=project_id)
 
         return redirect('voting:project', project_id=project_id)
 
     ideas = project.ideas.select_related('handle').all()
-    themes = project.themes.select_related('suggested_by').prefetch_related('votes').order_by('-created_at')
+    themes = list(
+        project.themes.select_related('suggested_by')
+        .prefetch_related('votes', 'comments__handle', 'comments__votes')
+        .order_by('-created_at')
+    )
+
+    # % tally: each theme's share of all votes cast in this poll.
+    total_votes = sum(t.vote_count for t in themes)
+    leader_id = None
+    best = 0
+    for t in themes:
+        t.vote_pct = round(100 * t.vote_count / total_votes) if total_votes else 0
+        if t.vote_count > best:
+            best, leader_id = t.vote_count, t.pk
+        # mark the top-voted "build" in each thread
+        t.top_comment_id = None
+        top = 0
+        for c in t.comments.all():
+            if c.vote_count > top:
+                top, t.top_comment_id = c.vote_count, c.pk
 
     voted_theme_ids = set()
+    voted_comment_ids = set()
     if current_handle:
         voted_theme_ids = set(
             Vote.objects.filter(handle=current_handle, theme__project=project)
             .values_list('theme_id', flat=True)
+        )
+        voted_comment_ids = set(
+            CommentVote.objects.filter(handle=current_handle, comment__theme__project=project)
+            .values_list('comment_id', flat=True)
         )
 
     return render(request, 'voting/project.html', {
@@ -87,4 +153,7 @@ def project_view(request, project_id):
         'ideas': ideas,
         'themes': themes,
         'voted_theme_ids': voted_theme_ids,
+        'voted_comment_ids': voted_comment_ids,
+        'leader_id': leader_id,
+        'total_votes': total_votes,
     })

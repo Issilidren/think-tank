@@ -81,3 +81,28 @@ class Vote(models.Model):
 
     class Meta:
         unique_together = ('theme', 'handle')
+
+
+class Comment(models.Model):
+    theme = models.ForeignKey(Theme, on_delete=models.CASCADE, related_name='comments')
+    handle = models.ForeignKey(Handle, on_delete=models.CASCADE, related_name='comments')
+    text = models.CharField(max_length=300)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'{self.handle.name} on {self.theme.title}: {self.text[:40]}'
+
+    @property
+    def vote_count(self):
+        return self.votes.count()
+
+
+class CommentVote(models.Model):
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='votes')
+    handle = models.ForeignKey(Handle, on_delete=models.CASCADE, related_name='comment_votes')
+
+    class Meta:
+        unique_together = ('comment', 'handle')

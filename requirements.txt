@@ -2,3 +2,4 @@ Django>=4.2,<5.0
 python-dotenv
 gunicorn
 whitenoise
+django-vite

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Handle, Idea, Theme, TEAM_CHOICES
+from .models import Handle, Idea, Theme, Comment, TEAM_CHOICES
 
 
 class HandleForm(forms.Form):
@@ -26,4 +26,16 @@ class ThemeForm(forms.ModelForm):
         fields = ['title']
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'Suggest a theme...'})
+        }
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['text']
+        widgets = {
+            'text': forms.TextInput(attrs={
+                'placeholder': 'Build on this concept...',
+                'maxlength': 300,
+            })
         }

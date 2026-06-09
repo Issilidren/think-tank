@@ -6,6 +6,9 @@ db.sqlite3
 venv/
 env/
 *.egg-info/
-dist/
+/dist/
 build/
 .DS_Store
+frontend/node_modules/
+# static/dist/ is committed — built locally, deployed as-is (no Node on the server)
+staticfiles/

@@ -36,10 +36,33 @@ python manage.py runserver
 
 Open **http://127.0.0.1:8000/project/1/**
 
+### Frontend (Vite)
+
+Install frontend deps once:
+```bash
+cd frontend && npm install && cd ..
+```
+
+**Dev (hot reload)** — run both in separate terminals:
+```bash
+# Terminal 1 — Django
+python manage.py runserver
+
+# Terminal 2 — Vite dev server (hot reload)
+cd frontend && npm run dev
+```
+
+**Production build** — bundle CSS/JS before deploying:
+```bash
+cd frontend && npm run build
+```
+Vite writes hashed assets into `static/dist/`. Django/whitenoise serves them.
+
 ---
 
 ## Stack
 
 - Python 3 / Django 4.2
+- Vite 5 (asset bundler, hot reload in dev)
 - SQLite
-- Vanilla JS + CSS — no build step required
+- Vanilla JS + CSS
