@@ -5,4 +5,5 @@ app_name = 'voting'
 
 urlpatterns = [
     path('project/<int:project_id>/', views.project_view, name='project'),
+    path('user/<int:handle_id>/', views.user_profile, name='user_profile'),
 ]

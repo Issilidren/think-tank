@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %} — @{{ profile_handle.name }}{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+
+  <!-- Profile header -->
+  <div class="card profile-header-card">
+    <div class="profile-identity">
+      <h2 class="profile-handle">@{{ profile_handle.name }}</h2>
+      <span class="team-badge team-{{ profile_handle.team }}">
+        {{ profile_handle.team_label }}
+      </span>
+    </div>
+    <p class="profile-since">Member since {{ profile_handle.created_at|date:"N j, Y" }}</p>
+  </div>
+
+  <!-- Submitted ideas -->
+  <div class="card">
+    <h2>Submitted Ideas
+      <span class="profile-count">{{ ideas.count }}</span>
+    </h2>
+
+    {% if ideas %}
+      <ul class="idea-list profile-list">
+        {% for idea in ideas %}
+          <li class="idea-item">
+            <span class="idea-project-label">{{ idea.project.title }}</span>
+            <span class="idea-text">{{ idea.text }}</span>
+            <span class="idea-meta">{{ idea.submitted_at|date:"N j, Y, g:i a" }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-msg">No ideas submitted yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Votes cast -->
+  <div class="card">
+    <h2>Themes Voted For
+      <span class="profile-count">{{ votes.count }}</span>
+    </h2>
+
+    {% if votes %}
+      <ul class="idea-list profile-list">
+        {% for vote in votes %}
+          <li class="idea-item">
+            <span class="idea-project-label">{{ vote.theme.project.title }}</span>
+            <span class="idea-text">{{ vote.theme.title }}</span>
+            <span class="idea-meta">
+              suggested by @{{ vote.theme.suggested_by.name }}
+              &middot;
+              <span class="team-dot team-{{ vote.theme.suggested_by.team }}"></span>
+              {{ vote.theme.suggested_by.team_label|default:"Unknown" }}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-msg">No votes cast yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Back link -->
+  <div class="profile-back">
+    <a href="javascript:history.back()" class="btn btn-secondary">&larr; Back</a>
+  </div>
+
+</div>
+{% endblock %}
