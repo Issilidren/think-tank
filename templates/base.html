@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Think Tank{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <h1 class="site-title">Think Tank</h1>
+      {% if current_handle %}
+        <span class="handle-pill team-{{ current_handle.team }}">
+          @{{ current_handle.name }} &middot; {{ current_handle.team_label }}
+        </span>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="site-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    {% if GITHUB_REPO_URL %}
+      <a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener">&#x1F419; View on GitHub</a>
+    {% endif %}
+  </footer>
+</body>
+</html>
