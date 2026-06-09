@@ -41,12 +41,13 @@ def project_view(request, project_id):
             return redirect('voting:project', project_id=project_id)
 
         if action == 'submit_idea' and current_handle:
-            form = IdeaForm(request.POST)
-            if form.is_valid():
-                idea = form.save(commit=False)
-                idea.project = project
-                idea.handle = current_handle
-                idea.save()
+            if project.can_add_idea(current_handle):
+                form = IdeaForm(request.POST)
+                if form.is_valid():
+                    idea = form.save(commit=False)
+                    idea.project = project
+                    idea.handle = current_handle
+                    idea.save()
             return redirect('voting:project', project_id=project_id)
 
         if action == 'suggest_theme' and current_handle:

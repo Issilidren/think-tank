@@ -21,10 +21,31 @@ class Handle(models.Model):
 
 class Project(models.Model):
     title = models.CharField(max_length=200)
+    owner = models.ForeignKey(
+        'Handle',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='owned_projects',
+    )
+    is_private = models.BooleanField(
+        default=False,
+        help_text='Private projects only allow the owner to submit ideas.',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
+
+    def can_add_idea(self, handle):
+        """Return True if *handle* is allowed to submit an idea to this project.
+
+        Group projects (is_private=False) are open to everyone.
+        Private projects are restricted to the owner only.
+        """
+        if not self.is_private:
+            return True
+        return handle is not None and self.owner_id is not None and handle.pk == self.owner_id
 
 
 class Idea(models.Model):
